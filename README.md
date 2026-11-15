@@ -42,4 +42,8 @@ The Longevity Strategies Project refreshes the PNG folder on the 1st of each mon
 
    Do not change Digest issues or other graph sites as part of a monthly refresh, unless the sidebar itself needs an update.
 
+## Graph layout (2026-11-15)
+
+`build.py` renders each graph at full width of the content column (column max 1500px, image 1600x901 webp straight from the source PNGs, not downscaled), one per row with no side-by-side thumbnail. Title and slide line sit directly below, followed by the source links in small (12px) wrapping text. Clicking a graph opens a full-screen lightbox (vanilla JS/CSS in `index.html`; closes on click or Esc); the image is wrapped in a link to the full-size file, so it still opens without JavaScript. The monthly refresh keeps all of this because it lives in `build.py` (`common.CSS` additions, `fig()`, `LIGHTBOX`). Chart content and titles are unchanged.
+
 The shared left-column link lives in `/workspace/risk-watcher/tvv_nav.py` (`longevity` → this site). A full Digest or graph-site rebuild will pick it up; a sidebar-only update should patch each site's `index.html` nav block and leave `style.css` and issue pages untouched.

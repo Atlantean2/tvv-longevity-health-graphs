@@ -35,14 +35,31 @@ CAT_KEYS = {
 }
 
 common.CSS += """
-figure.g{display:grid;grid-template-columns:minmax(0,7fr) minmax(260px,3fr);gap:22px;align-items:start;margin:0 0 40px}
-figure.g img{width:100%;height:auto;max-width:none}
-figure.g figcaption{font-size:18px;line-height:1.5;margin:0}figure.g figcaption p{margin:0 0 12px}
-figure.g figcaption .t{font-weight:700;display:block;margin-bottom:8px}
+/* 2026-11-15 (Michael): graphs full width, no side-by-side thumbnails; sources small, directly below; click = lightbox */
+main{max-width:1500px}
+figure.g{display:block;margin:0 0 34px;padding:0}
+figure.g a.zoom{display:block;cursor:zoom-in}
+figure.g img{display:block;width:100%;max-width:none;height:auto;margin:0}
+figure.g figcaption{font-size:14px;line-height:1.4;margin:6px 2px 0}figure.g figcaption p{margin:0}
+figure.g figcaption .t{font-weight:700;display:inline;margin-right:6px}
+figure.g figcaption .slide{display:inline}
+figure.g figcaption .srcs{display:block;font-size:12px;line-height:1.35;margin-top:3px;overflow-wrap:anywhere}
+figure.g figcaption .srcs a{margin-right:8px}
 .notice{border-left:4px solid #8B0000;background:#faf3f3;padding:10px 14px;margin:0 0 24px;font-size:17px;line-height:1.5}
 header .notice{margin:8px 0 0;font-size:15px;max-width:52rem}
-@media(max-width:1100px){figure.g{grid-template-columns:1fr}}
+#lb{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:12px;cursor:zoom-out}
+#lb.on{display:flex}#lb img{max-width:100%;max-height:100%;object-fit:contain;background:#fff}
+#lb .hint{position:absolute;top:8px;right:14px;color:#fff;font:13px Arial,sans-serif}
 """
+LIGHTBOX = (
+    '<div id="lb" role="dialog" aria-label="Enlarged graph"><img alt=""><span class="hint">Click or press Esc to close</span></div>'
+    "<script>(function(){var lb=document.getElementById('lb'),im=lb.querySelector('img');"
+    "function close(){lb.classList.remove('on');im.removeAttribute('src')}"
+    "document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a.zoom');"
+    "if(a){e.preventDefault();im.src=a.href;im.alt=a.getAttribute('data-alt')||'';lb.classList.add('on');return}"
+    "if(lb.classList.contains('on'))close()});"
+    "document.addEventListener('keydown',function(e){if(e.key==='Escape')close()})})()</script>"
+)
 
 
 def slug(filename: str) -> str:
@@ -94,14 +111,16 @@ NOTICE_HTML = (
 def fig(row):
     links = " ".join(f'<a href="{E(u)}">{E(u)}</a>' for u in row["urls"])
     slide = row["guide_slide"].strip()
+    alt = row["category"] + ": " + row["title"]
     cap = (
         f'<span class="t">{E(row["title"])}</span>'
-        f"<p>From the Longevity Health Supplements Guide, slide {E(slide)}.</p>"
-        f"<p>Sources: {links}</p>"
+        f'<span class="slide">From the Longevity Health Supplements Guide, slide {E(slide)}.</span>'
+        f'<span class="srcs">Sources: {links}</span>'
     )
     return (
         f'<figure class="g" id="{E(Path(row["webp"]).stem)}">'
-        f'<img src="img/{E(row["webp"])}" alt="{E(row["category"] + ": " + row["title"])}" loading="lazy">'
+        f'<a class="zoom" href="img/{E(row["webp"])}" data-alt="{E(alt)}" title="Click to enlarge">'
+        f'<img src="img/{E(row["webp"])}" alt="{E(alt)}" loading="lazy" width="1600" height="901"></a>'
         f"<figcaption>{cap}</figcaption></figure>"
     )
 
@@ -161,7 +180,7 @@ def main():
     )
     if needle not in html:
         raise SystemExit("Could not insert header notice into index.html")
-    Path("index.html").write_text(html.replace(needle, insert, 1))
+    Path("index.html").write_text(html.replace(needle, insert, 1).replace("</body>", LIGHTBOX + "</body>", 1))
     print(counts, f"{sum(counts.values())} charts", f"{len(src)} sources")
 
 
